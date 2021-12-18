@@ -74,15 +74,15 @@ int main()
 
 
 	const char* data = "Hello world Hello world Hello world Hello world Hello world";
-	oneFifoTransaction(fifo, data, 100);
+	//oneFifoTransaction(fifo, data, 100);
 
-	//std::thread thrW(write);
-	//std::thread thrR(read);
+	std::thread thrW(write);
+	std::thread thrR(read);
 
-	////read();
+	//read();
 
-	//thrW.join();
-	//thrR.join();
+	thrW.join();
+	thrR.join();
 	
 
 	

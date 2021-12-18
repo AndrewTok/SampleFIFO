@@ -86,7 +86,6 @@ void SampleFIFO::addReady(void* data)
 	}
 	size_t count = requestedFreeCount;
 	std::cout << std::endl << "start write" << std::endl;
-
 	if (m_nFree > m_nReady)
 	{
 		m_nReadySize += count * blockSize;
@@ -98,7 +97,8 @@ void SampleFIFO::addReady(void* data)
 	}
 	else if (m_nFree == m_nReady)
 	{
-		throw std::out_of_range("cant write anymore");
+		m_nReadySize += count * blockSize;
+		m_nFreeSize -= count * blockSize;
 	}
 	m_nFree = (m_nFree + count*blockSize);
 	if (m_nFree == m_nFullSize)
@@ -106,56 +106,7 @@ void SampleFIFO::addReady(void* data)
 		m_nFree = 0;
 		m_nFreeSize = m_nReady;
 	}
-
-
-	//if (m_nFree == m_nReady)
-	//{
-	//	//free догнал ready и свободного места больше нет
-	//	// размер ready не меняется
-	//	m_nFreeSize = 0;
-
-	//}
-	//else if (m_nFree == m_nFullSize)
-	//{
-	//	// free дошел до края, перекинулся, размер ready - дистанция до края, размер free - дистанция до ready
-	//	m_nFree = 0;
-	//	m_nFreeSize = m_nReady;
-	//	m_nReadySize += count * blockSize;
-	//	if (m_nReadySize != m_nFullSize - m_nReady || m_nReady == m_nFullSize)
-	//	{
-	//		throw std::out_of_range("bad ready!!!!!"); // убрать после отладки
-	//	}
-	//}
-	//else if (m_nFree > m_nFullSize)
-	//{
-	//	//free перешел через край, так не должно быть
-	//	throw std::out_of_range("nfree out of border!!!!!"); // убрать после отладки
-	//}
-	//else if (m_nFree < m_nReady)
-	//{
-	//	//ready Не меняется, free уменьшается
-	//	m_nFreeSize -= count * blockSize;
-	//	if (m_nFreeSize != m_nReady - m_nFree)
-	//	{
-	//		throw std::out_of_range("bad nfree!!!!!"); // убрать после отладки
-	//	}
-	//}
-	//else if (m_nFree > m_nReady)
-	//{
-	//	// размер ready увеличивается на сдвиг free и равен дистанции между ними, размер free уменьшается на сдвиг и равен дистанции до края
-	//	m_nFreeSize -= count * blockSize;
-	//	if (m_nFreeSize != m_nFullSize - m_nFree)
-	//	{
-	//		throw std::out_of_range("bad nfree!!!!!"); // убрать после отладки
-	//	}
-	//	m_nReadySize += count * blockSize;
-	//	if (m_nReadySize != m_nFree - m_nReady)
-	//	{
-	//		throw std::out_of_range("bad ready!!!!!"); // убрать после отладки
-	//	}
-	//}
 	std::cout << std::endl << "end write" << std::endl;
-	
 }
 
 void* SampleFIFO::getReady(size_t& count)
@@ -205,7 +156,8 @@ void SampleFIFO::addFree(void* data)
 	}
 	else if (m_nFree == m_nReady)
 	{
-		throw std::out_of_range("can't read anymore");
+		m_nReadySize -= count * blockSize;
+		m_nFreeSize += count * blockSize;
 	}
 	m_nReady = (m_nReady + count * blockSize);
 	if (m_nReady == m_nFullSize)
@@ -214,54 +166,6 @@ void SampleFIFO::addFree(void* data)
 		m_nReadySize = m_nFree;
 	}
 
-	//m_nReady = (m_nReady + count*blockSize);
-
-	//if (m_nReady == m_nFree)
-	//{
-	//	//ready догнал free b готового места больше нет
-	//	// размер free не меняется
-	//	m_nReadySize = 0;
-
-	//}
-	//else if (m_nReady == m_nFullSize)
-	//{
-	//	// ready дошел до края, перекинулся, размер free - дистанция до края, размер ready - дистанция до free
-	//	m_nReady = 0;
-	//	m_nReadySize = m_nFree;
-	//	m_nFreeSize += count * blockSize;
-	//	if (m_nFreeSize != m_nFullSize - m_nFree || m_nFree == m_nFullSize)
-	//	{
-	//		throw std::out_of_range("bad free!!!!!"); // убрать после отладки
-	//	}
-	//}
-	//else if (m_nReady > m_nFullSize)
-	//{
-	//	//ready перешел через край, так не должно быть
-	//	throw std::out_of_range("nready out of border!!!!!"); // убрать после отладки
-	//}
-	//else if (m_nReady < m_nFree)
-	//{
-	//	//free Не меняется, ready уменьшается
-	//	m_nReadySize -= count * blockSize;
-	//	if (m_nReadySize != m_nFree - m_nReady)
-	//	{
-	//		throw std::out_of_range("bad nready!!!!!"); // убрать после отладки
-	//	}
-	//}
-	//else if (m_nReady > m_nFree )
-	//{
-	//	// размер free увеличивается на сдвиг ready и равен дистанции между ними, размер ready уменьшается на сдвиг и равен дистанции до края
-	//	m_nReadySize -= count * blockSize;
-	//	if (m_nReadySize != m_nFullSize - m_nReady)
-	//	{
-	//		throw std::out_of_range("bad nready!!!!!"); // убрать после отладки
-	//	}
-	//	m_nFreeSize += count * blockSize;
-	//	if (m_nFreeSize != m_nReady - m_nFree)
-	//	{
-	//		throw std::out_of_range("bad free!!!!!"); // убрать после отладки
-	//	}
-	//}
 
 	std::cout << "end read" << std::endl;
 }

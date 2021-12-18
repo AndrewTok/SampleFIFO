@@ -2,39 +2,51 @@
 #include <thread>
 #include <mutex>
 #include <memory> // for shared ptr (may be)
-
+#include <iostream>
+#include <vector>
 
 class SampleFIFO final
 {
 	std::mutex m_FifoMutex;
-	char* m_pData; //const
-	size_t m_nReady;
-	size_t m_nFree;
-	char* m_pEnd; //const
+	std::vector<char> m_pData; //const u
+	volatile size_t m_nReady;
+	volatile size_t m_nFree;
+	volatile size_t m_nFreeSize;
+	volatile size_t m_nReadySize; // размер
+	volatile size_t m_nFullSize; // delete in release
 
-	size_t blockSize;
-	size_t maxBlocks;
+	const size_t blockSize;
+	const size_t maxBlocks;
 	
+	size_t requestedFreeCount;
+	void* givenFreePtr;
+	
+	size_t requestedReadyCount;
+	void* givenReadyPtr;
+
 	//size_t requestedBlocksCount;
 
-	size_t getReadySize() const; // количетсво байт доступных для считывания из очереди
-	size_t getFreeSize() const; // количество байт доступных для записи в очередь
-	
+	void printBuff() const;
+
+	//запоминать адрес и длину
 
 public:
 
 	SampleFIFO(size_t blockSize, size_t maxBlocks);
 
-	~SampleFIFO();
 	// для записи в очередь
-	void* getFree(size_t count);
-	void addReady(size_t count);
+	void* getFree(size_t& count);
+	void addReady(void * data); // void * 
 
 	// для считываения из очереди
-	void* getReady(size_t& count);
-	void addFree(size_t count);
+	void* getReady(size_t& count); // тот ли блок отдали
+	void addFree(void * data);
 
 	size_t getFullSize() const; // размер всей очереди
 	size_t getBlockSize() const;
+	size_t getReadySize() const; // количетсво смежных байт доступных для считывания из очереди
+	size_t getFreeSize() const; // количество смежных байт доступных для записи в очередь
+
+	void printStat();
 };
 

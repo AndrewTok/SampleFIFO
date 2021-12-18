@@ -3,6 +3,8 @@
 #include <vector>
 #include <deque>
 #include <iostream>
+#include <chrono>
+#include <thread>
 
 class Writer final
 {
@@ -11,7 +13,7 @@ class Writer final
 
 	std::istream& dataSource;
 
-	void writeBlocks(void* destinfation, std::deque<char>& data, size_t count);
+	void writeBlocks(void* destinfation, std::deque<char>& data, size_t& count);
 
 	void prepareData(std::deque<char>& data, size_t count);
 

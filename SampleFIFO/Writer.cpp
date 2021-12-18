@@ -40,46 +40,40 @@ void Writer::printData(std::deque<char>& data) const
 	std::cout << std::endl;
 }
 
+size_t Writer::getStartBlocksCount(size_t dataPortionSize) const
+{
+	return dataPortionSize > sampleFifo.getBlockSize() ? dataPortionSize / sampleFifo.getBlockSize() : 1;
+}
+
+bool Writer::thereIsDataToSend(std::deque<char>& data) const
+{
+	return !dataSource.eof() || (data.size() / sampleFifo.getBlockSize() > 0);
+}
+
 
 int Writer::write(size_t dataPortionSize)
 {
-	if (dataPortionSize > sampleFifo.getFullSize())
-	{
-		//throw std::out_of_range("too big data portion");
-		return 1;
-	}
+	//std::cout << std::endl << "writer: " << std::this_thread::get_id() << std::endl;
 
-	std::cout << std::endl << "writer: " << std::this_thread::get_id() << std::endl;
-	void* dest;
-	size_t blocksCount = dataPortionSize > sampleFifo.getBlockSize() ? dataPortionSize / sampleFifo.getBlockSize() : 1;
 	std::deque<char> data;
 	prepareData(data, dataPortionSize);
-	size_t badLoopCount = 0;
-	size_t maxBadLoopCount = 64;
-	while (badLoopCount < maxBadLoopCount)
+	while (thereIsDataToSend(data))
 	{
-		//printData(data);
-		
-		//std::cout << std::endl << "writer start loop" << std::endl;
-		//sampleFifo.printStat();
-		//std::this_thread::sleep_for(20s);
-		blocksCount = data.size() / sampleFifo.getBlockSize(); //data.size() > sampleFifo.getBlockSize() ? data.size() / sampleFifo.getBlockSize() : 1;
-		dest = sampleFifo.getFree(blocksCount);
-		if (dest == nullptr)
+		prepareData(data, dataPortionSize);
+		size_t blocksCount = data.size() / sampleFifo.getBlockSize();
+		void* destination = sampleFifo.getFree(blocksCount);
+		if (destination == nullptr)
 		{
-			++badLoopCount;
-			std::this_thread::sleep_for(100ms); //wait for new data is available 
-			//std::cout << std::endl << "writer end loop" << std::endl;
+			std::this_thread::sleep_for(100ms); //wait for new place is available 
+			sampleFifo.printStat();
 			continue;
 		}
 		else
 		{
-			writeBlocks(dest, data, blocksCount);
-			sampleFifo.addReady(dest);
-			prepareData(data, dataPortionSize);
-			//std::cout << std::endl << "writer end loop" << std::endl;
-			//printData(data);
+			writeBlocks(destination, data, blocksCount);
+			sampleFifo.addReady(destination);
 		}
 	}
+	sampleFifo.finishTransfer();
 	return 0;
 }

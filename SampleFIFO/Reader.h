@@ -18,6 +18,8 @@ class Reader final
 
 	void printData(std::deque<char>& data);
 
+	size_t getStartBlocksCount(size_t dataPortionSize) const;
+
 public:
 
 	Reader(SampleFIFO& fifo, std::ostream& out) : sampleFifo(fifo), dataOutput(out) {}

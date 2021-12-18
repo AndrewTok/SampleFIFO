@@ -10,6 +10,21 @@ size_t SampleFIFO::getFreeSize() const
 	return m_nFreeSize;
 }
 
+void SampleFIFO::startTransfer()
+{
+	dataIsTransfering.store(true);
+}
+
+void SampleFIFO::finishTransfer()
+{
+	dataIsTransfering.store(false);
+}
+
+bool SampleFIFO::isDataTransfering() const
+{
+	return dataIsTransfering.load();
+}
+
 size_t SampleFIFO::getFullSize() const
 {
 	return blockSize*maxBlocks;
@@ -50,6 +65,7 @@ SampleFIFO::SampleFIFO(size_t _blockSize, size_t _maxBlocks) : blockSize(_blockS
 	m_nFreeSize = getFullSize();
 	m_nReadySize = 0;
 	m_nFullSize = blockSize * maxBlocks;
+	dataIsTransfering.store(false);
 }
 
 void* SampleFIFO::getFree(size_t& count)
@@ -80,12 +96,12 @@ void* SampleFIFO::getFree(size_t& count)
 void SampleFIFO::addReady(void* data)
 {
 	std::lock_guard<std::mutex> guard(m_FifoMutex);
-	if (data != givenFreePtr)
+	if (data != givenFreePtr || data == nullptr)
 	{
 		return;
 	}
 	size_t count = requestedFreeCount;
-	std::cout << std::endl << "start write" << std::endl;
+	//std::cout << std::endl << "start write" << std::endl;
 	if (m_nFree > m_nReady)
 	{
 		m_nReadySize += count * blockSize;
@@ -106,7 +122,7 @@ void SampleFIFO::addReady(void* data)
 		m_nFree = 0;
 		m_nFreeSize = m_nReady;
 	}
-	std::cout << std::endl << "end write" << std::endl;
+	//std::cout << std::endl << "end write" << std::endl;
 }
 
 void* SampleFIFO::getReady(size_t& count)
@@ -136,12 +152,12 @@ void SampleFIFO::addFree(void* data)
 	//вынести функцию сравнения free ready
 
 	std::lock_guard<std::mutex> guard(m_FifoMutex);
-	if (data != givenReadyPtr)
+	if (data != givenReadyPtr || data == nullptr)
 	{
 		return;
 	}
 
-	std::cout << std::endl << "start read" << std::endl;
+	//std::cout << std::endl << "start read" << std::endl;
 
 	size_t count = requestedReadyCount;
 
@@ -167,5 +183,5 @@ void SampleFIFO::addFree(void* data)
 	}
 
 
-	std::cout << "end read" << std::endl;
+	//std::cout << "end read" << std::endl;
 }

@@ -24,11 +24,11 @@ class SampleFIFO final
 	size_t requestedReadyCount;
 	void* givenReadyPtr;
 
-	//size_t requestedBlocksCount;
+	std::atomic<bool> dataIsTransfering;
+
 
 	void printBuff() const;
 
-	//запоминать адрес и длину
 
 public:
 
@@ -42,10 +42,16 @@ public:
 	void* getReady(size_t& count); // тот ли блок отдали
 	void addFree(void * data);
 
-	size_t getFullSize() const; // размер всей очереди
+	size_t getFullSize() const; // размер всей очереди в байтах
 	size_t getBlockSize() const;
 	size_t getReadySize() const; // количетсво смежных байт доступных для считывания из очереди
 	size_t getFreeSize() const; // количество смежных байт доступных для записи в очередь
+
+	void startTransfer();
+	void finishTransfer();
+
+	bool isDataTransfering() const;
+	
 
 	void printStat();
 };

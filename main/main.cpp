@@ -17,39 +17,50 @@ void oneFifoTransaction(SampleFIFO& fifo, const char* input, size_t inputSize)
 	char* currOut = output;
 	const char* currPtr = input;
 	size_t count = 3;
-	while (currPtr < input + inputSize)
+	fifo.startTransfer();
+	bool dataIsTransfering = true;
+	while (dataIsTransfering)
 	{
-		void* data = fifo.getFree(count);
-		size_t size = count * fifo.getBlockSize();
-		if (data == nullptr)
+		if (fifo.isDataTransfering())
 		{
-			std::cout << "fail to get free" << std::endl;
-			
-		}
-		else
-		{
-			memcpy(data, currPtr, size);
-			fifo.addReady(data);
-			currPtr += size;
-		}
+			void* data = fifo.getFree(count);
+			size_t size = count * fifo.getBlockSize();
+			if (data == nullptr)
+			{
+				std::cout << "fail to get free" << std::endl;
 
+			}
+			else
+			{
+				memcpy(data, currPtr, size);
+				fifo.addReady(data);
+				currPtr += size;
+				if (currPtr >= input + inputSize)
+				{
+					fifo.finishTransfer();
+				}
+			}
+		}
 
 		size_t blocks = 1;
-		data = fifo.getReady(blocks);
+		void * data = fifo.getReady(blocks);
 		if (data == nullptr)
 		{
-			std::cout << "fail to get ready" << std::endl;
-
+			if (fifo.isDataTransfering())
+			{
+				std::cout << "fail to get ready" << std::endl;
+			}
+			else
+			{
+				dataIsTransfering = false;
+			}
 		}
 		else
 		{
 			memcpy(currOut, data, blocks * fifo.getBlockSize());
 			fifo.addFree(data);
 			currOut += blocks * fifo.getBlockSize();
-			//output[blocks * fifo.getBlockSize()] = '\0';
-			//std::cout << output;// << std::endl;
 		}
-
 	}
 	std::cout << output << std::endl;
 
@@ -57,7 +68,7 @@ void oneFifoTransaction(SampleFIFO& fifo, const char* input, size_t inputSize)
 
 int main()
 {
-	SampleFIFO fifo(2, 16);
+	SampleFIFO fifo(5, 7);
 	std::istrstream istr("Hello world");
 	std::ifstream ifstr("text.txt");
 	std::strstream ostr;
@@ -69,14 +80,15 @@ int main()
 	Writer wr(fifo, ifstr);
 	Reader reader(fifo, ostr);
 
-	auto write = [&wr] {return wr.write(4); };
-	auto read = [&reader] {return reader.read(4); };
+	auto write = [&wr] {return wr.write(100); };
+	auto read = [&reader] {return reader.read(100); };
 
 
 	const char* data = "Hello world Hello world Hello world Hello world Hello world";
-	//oneFifoTransaction(fifo, data, 100);
+	//oneFifoTransaction(fifo, data, 60);
 
 	std::thread thrW(write);
+	fifo.startTransfer();
 	std::thread thrR(read);
 
 	//read();

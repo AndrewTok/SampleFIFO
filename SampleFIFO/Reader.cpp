@@ -20,7 +20,7 @@ void Reader::storeData(std::deque<char>& data)
 {
 	for (auto& byte : data)
 	{
-		dataOutput << byte; //.put(byte); // 
+		dataOutput << byte;
 	}
 }
 
@@ -34,37 +34,40 @@ void Reader::printData(std::deque<char>& data)
 	std::cout << std::endl;
 }
 
+size_t Reader::getStartBlocksCount(size_t dataPortionSize) const
+{
+	return dataPortionSize > sampleFifo.getBlockSize() ? dataPortionSize / sampleFifo.getBlockSize() : 1;
+}
+
 int Reader::read(size_t dataPortionSize)
 {
 
-	std::cout << std::endl << "reader: " << std::this_thread::get_id() << std::endl;
-	void* source;
-	size_t startBlocksCount = dataPortionSize > sampleFifo.getBlockSize() ? dataPortionSize / sampleFifo.getBlockSize() : 1;
+	//std::cout << std::endl << "reader: " << std::this_thread::get_id() << std::endl;
+	
+	size_t startBlocksCount = getStartBlocksCount(dataPortionSize);
 	std::deque<char> data;
-	size_t maxbadLoopCount = 64;
-	size_t badLoopCount = 0;
-	while (badLoopCount < maxbadLoopCount)
+	
+	bool reading = true;
+	while (reading)
 	{	
-		//blocksCount = dataPortionSize / sampleFifo.getBlockSize();
-		//std::cout << std::endl << "reader start loop" << std::endl;
-		sampleFifo.printStat();
-		//std::this_thread::sleep_for(20s);
 		size_t blocksCount = startBlocksCount;
-		source = sampleFifo.getReady(blocksCount);
+		void* source = sampleFifo.getReady(blocksCount);
 		if (source == nullptr)
 		{
-			badLoopCount++;
-			std::this_thread::sleep_for(100ms); //wait for new data
-			//std::cout << std::endl << "reader end loop" << std::endl;
-			continue;
+			if (sampleFifo.isDataTransfering())
+			{
+				std::this_thread::sleep_for(10ms); //wait for new data
+			}
+			else
+			{
+				reading = false;
+			}
 		}
 		else
 		{
 			data = readData(source, blocksCount*sampleFifo.getBlockSize());
 			storeData(data);
 			sampleFifo.addFree(source);
-			//std::cout << std::endl << "reader end loop" << std::endl;
-			//printData(data);
 		}
 	}
 	return 0;

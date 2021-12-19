@@ -70,6 +70,10 @@ SampleFIFO::SampleFIFO(size_t _blockSize, size_t _maxBlocks) : blockSize(_blockS
 
 void* SampleFIFO::getFree(size_t& count)
 {
+	if (blockSize == 0 || maxBlocks == 0)
+	{
+		return nullptr;
+	}
 	std::lock_guard<std::mutex> guard(m_FifoMutex);
 	if (count == 0)
 	{
@@ -127,6 +131,10 @@ void SampleFIFO::addReady(void* data)
 
 void* SampleFIFO::getReady(size_t& count)
 {
+	if (blockSize == 0 || maxBlocks == 0)
+	{
+		return nullptr;
+	}
 	std::lock_guard<std::mutex> guard(m_FifoMutex);
 	if (count == 0)
 	{

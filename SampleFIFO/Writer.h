@@ -27,7 +27,7 @@ public:
 
 	Writer(SampleFIFO& fifo, std::istream& _dataSource) : sampleFifo(fifo), dataSource(_dataSource) {}
 
-	int write(size_t dataPortionSize);
+	void write();
 
 	
 };

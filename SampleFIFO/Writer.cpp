@@ -3,7 +3,7 @@ using namespace std::chrono;
 
 void Writer::writeBlocks(void * destination, std::deque<char>& data, size_t& count)
 {
-	if (destination == nullptr)
+	if (destination == nullptr || data.empty())
 	{
 		return;
 	}
@@ -21,10 +21,14 @@ void Writer::writeBlocks(void * destination, std::deque<char>& data, size_t& cou
 
 void Writer::prepareData(std::deque<char>& data, size_t bytesNum) //догрузить данные
 {
-	char currByte;
+	
 	while (bytesNum != 0 && !dataSource.eof())
 	{
-		dataSource.get(currByte);
+		char currByte = dataSource.get();
+		if (dataSource.fail())
+		{
+			break;
+		}
 		data.push_back(currByte);
 		--bytesNum;
 	}
@@ -47,16 +51,17 @@ size_t Writer::getStartBlocksCount(size_t dataPortionSize) const
 
 bool Writer::thereIsDataToSend(std::deque<char>& data) const
 {
-	return !dataSource.eof() || (data.size() / sampleFifo.getBlockSize() > 0);
+	return !dataSource.eof() || ((data.size()) / sampleFifo.getBlockSize() > 0);
 }
 
 
-int Writer::write(size_t dataPortionSize)
+void Writer::write()
 {
 	//std::cout << std::endl << "writer: " << std::this_thread::get_id() << std::endl;
 
+	size_t dataPortionSize = sampleFifo.getFreeSize();
+
 	std::deque<char> data;
-	prepareData(data, dataPortionSize);
 	while (thereIsDataToSend(data))
 	{
 		prepareData(data, dataPortionSize);
@@ -64,16 +69,17 @@ int Writer::write(size_t dataPortionSize)
 		void* destination = sampleFifo.getFree(blocksCount);
 		if (destination == nullptr)
 		{
-			std::this_thread::sleep_for(100ms); //wait for new place is available 
-			sampleFifo.printStat();
+			std::this_thread::sleep_for(1ms); //wait for new place is available 
+			
 			continue;
 		}
 		else
 		{
+			//printData(data);
 			writeBlocks(destination, data, blocksCount);
 			sampleFifo.addReady(destination);
+			//sampleFifo.printStat();
+			
 		}
 	}
-	sampleFifo.finishTransfer();
-	return 0;
 }

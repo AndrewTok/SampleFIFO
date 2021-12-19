@@ -39,11 +39,11 @@ size_t Reader::getStartBlocksCount(size_t dataPortionSize) const
 	return dataPortionSize > sampleFifo.getBlockSize() ? dataPortionSize / sampleFifo.getBlockSize() : 1;
 }
 
-int Reader::read(size_t dataPortionSize)
+void Reader::read()
 {
 
 	//std::cout << std::endl << "reader: " << std::this_thread::get_id() << std::endl;
-	
+	size_t dataPortionSize = sampleFifo.getReadySize();
 	size_t startBlocksCount = getStartBlocksCount(dataPortionSize);
 	std::deque<char> data;
 	
@@ -56,7 +56,7 @@ int Reader::read(size_t dataPortionSize)
 		{
 			if (sampleFifo.isDataTransfering())
 			{
-				std::this_thread::sleep_for(10ms); //wait for new data
+				std::this_thread::sleep_for(1ms); //wait for new data
 			}
 			else
 			{
@@ -70,5 +70,4 @@ int Reader::read(size_t dataPortionSize)
 			sampleFifo.addFree(source);
 		}
 	}
-	return 0;
 }

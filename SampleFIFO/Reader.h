@@ -24,6 +24,6 @@ public:
 
 	Reader(SampleFIFO& fifo, std::ostream& out) : sampleFifo(fifo), dataOutput(out) {}
 
-	int read(size_t dataPortionSize);
+	void read();
 };
 

@@ -66,48 +66,64 @@ void oneFifoTransaction(SampleFIFO& fifo, const char* input, size_t inputSize)
 
 }
 
+void prtintStream(std::istream& str)
+{
+	str.clear();
+	str.seekg(0, std::ios::beg);
+	while (!str.eof())
+	{
+		std::cout << char(str.get());
+	}
+	std::cout << std::endl;
+	str.clear();
+	str.seekg(0, std::ios::beg);
+}
+
 int main()
 {
-	SampleFIFO fifo(5, 7);
+	SampleFIFO fifo(1, 21);
 	std::istrstream istr("Hello world");
 	std::ifstream ifstr("text.txt");
+	//prtintStream(ifstr);
 	std::strstream ostr;
 	if (!ifstr.is_open())
 	{
 		std::cout << "cant open" << std::endl;
 		return 1;
 	}
-	Writer wr(fifo, ifstr);
+	Writer wr(fifo, istr);
 	Reader reader(fifo, ostr);
 
-	auto write = [&wr] {return wr.write(100); };
-	auto read = [&reader] {return reader.read(100); };
+	auto write = [&wr] {return wr.write(); };
+	auto read = [&reader] {return reader.read(); };
 
 
 	const char* data = "Hello world Hello world Hello world Hello world Hello world";
 	//oneFifoTransaction(fifo, data, 60);
 
-	std::thread thrW(write);
 	fifo.startTransfer();
-	std::thread thrR(read);
+	write();
+	fifo.finishTransfer();
+	read();
+	//std::thread thrW(write);
+	//fifo.startTransfer();
+	//std::thread thrR(read);
 
-	//read();
+	////read();
 
-	thrW.join();
-	thrR.join();
+	//thrW.join();
+
+	//fifo.finishTransfer();
+
+	//thrR.join();
 	
-
-	
-
-	std::string out;
-	//ostr >> out;
 
 	while (!ostr.eof())
 	{
 		std::cout << char(ostr.get());
 	}
 
-	std::cout << std::endl << out << std::endl;
+
 	ifstr.close();
 	return 0;
 }

@@ -41,8 +41,6 @@ size_t Reader::getStartBlocksCount(size_t dataPortionSize) const
 
 void Reader::read()
 {
-
-	//std::cout << std::endl << "reader: " << std::this_thread::get_id() << std::endl;
 	size_t dataPortionSize = sampleFifo.getReadySize();
 	size_t startBlocksCount = getStartBlocksCount(dataPortionSize);
 	std::deque<char> data;

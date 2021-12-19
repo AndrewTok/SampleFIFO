@@ -78,21 +78,21 @@ void* SampleFIFO::getFree(size_t& count)
 	if (count == 0)
 	{
 		givenFreePtr = nullptr;
-		return givenFreePtr;
+		return nullptr;
 	}
 	else if (count * blockSize > m_nFreeSize)
 	{
 		if (m_nFreeSize / blockSize == 0)
 		{
 			givenFreePtr = nullptr;
-			return givenFreePtr;
+			return nullptr;
 		}
 		else
 		{
 			count = m_nFreeSize / blockSize;
 		}
 	}
-	givenFreePtr = (void*)&(m_pData[m_nFree]);
+	givenFreePtr = &(m_pData[m_nFree]);
 	requestedFreeCount = count;
 	return givenFreePtr;
 }
@@ -105,7 +105,6 @@ void SampleFIFO::addReady(void* data)
 		return;
 	}
 	size_t count = requestedFreeCount;
-	//std::cout << std::endl << "start write" << std::endl;
 	if (m_nFree > m_nReady)
 	{
 		m_nReadySize += count * blockSize;
@@ -126,7 +125,6 @@ void SampleFIFO::addReady(void* data)
 		m_nFree = 0;
 		m_nFreeSize = m_nReady;
 	}
-	//std::cout << std::endl << "end write" << std::endl;
 }
 
 void* SampleFIFO::getReady(size_t& count)
@@ -139,14 +137,14 @@ void* SampleFIFO::getReady(size_t& count)
 	if (count == 0)
 	{
 		givenReadyPtr = nullptr;
-		return givenReadyPtr;
+		return nullptr;
 	}
 	if (count * blockSize > m_nReadySize)
 	{
 		if (m_nReadySize == 0)
 		{
 			givenReadyPtr = nullptr;
-			return givenReadyPtr;
+			return nullptr;
 		}
 		count = m_nReadySize / blockSize;
 	}
@@ -157,18 +155,12 @@ void* SampleFIFO::getReady(size_t& count)
 
 void SampleFIFO::addFree(void* data)
 {
-	//вынести функцию сравнения free ready
-
 	std::lock_guard<std::mutex> guard(m_FifoMutex);
 	if (data != givenReadyPtr || data == nullptr)
 	{
 		return;
 	}
-
-	//std::cout << std::endl << "start read" << std::endl;
-
 	size_t count = requestedReadyCount;
-
 	if (m_nReady > m_nFree)
 	{
 		m_nFreeSize+= count * blockSize;
@@ -189,7 +181,4 @@ void SampleFIFO::addFree(void* data)
 		m_nReady = 0;
 		m_nReadySize = m_nFree;
 	}
-
-
-	//std::cout << "end read" << std::endl;
 }

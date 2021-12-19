@@ -1,4 +1,5 @@
 #include "Writer.h"
+
 using namespace std::chrono;
 
 void Writer::writeBlocks(void * destination, std::deque<char>& data, size_t& count)
@@ -14,14 +15,13 @@ void Writer::writeBlocks(void * destination, std::deque<char>& data, size_t& cou
 			count = (index-1)/sampleFifo.getBlockSize();
 			break;
 		}
-		*((char*)destination + index) = data[0];
+		((char*)destination)[index] = data[0];
 		data.pop_front();
 	}
 }
 
-void Writer::prepareData(std::deque<char>& data, size_t bytesNum) //догрузить данные
+void Writer::prepareData(std::deque<char>& data, size_t bytesNum)
 {
-	
 	while (bytesNum != 0 && !dataSource.eof())
 	{
 		char currByte = dataSource.get();
@@ -57,8 +57,6 @@ bool Writer::thereIsDataToSend(std::deque<char>& data) const
 
 void Writer::write()
 {
-	//std::cout << std::endl << "writer: " << std::this_thread::get_id() << std::endl;
-
 	size_t dataPortionSize = sampleFifo.getFreeSize();
 
 	std::deque<char> data;
@@ -70,16 +68,12 @@ void Writer::write()
 		if (destination == nullptr)
 		{
 			std::this_thread::sleep_for(1ms); //wait for new place is available 
-			
 			continue;
 		}
 		else
 		{
-			//printData(data);
 			writeBlocks(destination, data, blocksCount);
 			sampleFifo.addReady(destination);
-			//sampleFifo.printStat();
-			
 		}
 	}
 }

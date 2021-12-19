@@ -84,7 +84,7 @@ int main()
 	SampleFIFO fifo(1, 21);
 	std::istrstream istr("Hello world");
 	std::ifstream ifstr("text.txt");
-	//prtintStream(ifstr);
+	prtintStream(ifstr);
 	std::strstream ostr;
 	if (!ifstr.is_open())
 	{
@@ -99,23 +99,18 @@ int main()
 
 
 	const char* data = "Hello world Hello world Hello world Hello world Hello world";
-	//oneFifoTransaction(fifo, data, 60);
+	oneFifoTransaction(fifo, data, 60);
 
+
+	std::thread thrW(write);
 	fifo.startTransfer();
-	write();
+	std::thread thrR(read);
+
+	thrW.join();
+
 	fifo.finishTransfer();
-	read();
-	//std::thread thrW(write);
-	//fifo.startTransfer();
-	//std::thread thrR(read);
 
-	////read();
-
-	//thrW.join();
-
-	//fifo.finishTransfer();
-
-	//thrR.join();
+	thrR.join();
 	
 
 	while (!ostr.eof())

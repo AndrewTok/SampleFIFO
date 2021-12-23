@@ -52,7 +52,7 @@ void Reader::read()
 		void* source = sampleFifo.getReady(blocksCount);
 		if (source == nullptr)
 		{
-			if (sampleFifo.isDataTransfering())
+			if (dataIsTransfering.load())
 			{
 				std::this_thread::sleep_for(1ms); //wait for new data
 			}
@@ -68,4 +68,9 @@ void Reader::read()
 			sampleFifo.addFree(source);
 		}
 	}
+}
+
+void Reader::finish()
+{
+	dataIsTransfering = false;
 }

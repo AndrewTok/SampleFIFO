@@ -17,11 +17,10 @@ void oneFifoTransaction(SampleFIFO& fifo, const char* input, size_t inputSize)
 	char* currOut = output;
 	const char* currPtr = input;
 	size_t count = 3;
-	fifo.startTransfer();
-	bool dataIsTransfering = true;
-	while (dataIsTransfering)
+	bool writerFinish = false, readerFinish = false;
+	while (!writerFinish || !readerFinish)
 	{
-		if (fifo.isDataTransfering())
+		if (!writerFinish)
 		{
 			void* data = fifo.getFree(count);
 			size_t size = count * fifo.getBlockSize();
@@ -37,7 +36,7 @@ void oneFifoTransaction(SampleFIFO& fifo, const char* input, size_t inputSize)
 				currPtr += size;
 				if (currPtr >= input + inputSize)
 				{
-					fifo.finishTransfer();
+					writerFinish = true;
 				}
 			}
 		}
@@ -46,13 +45,13 @@ void oneFifoTransaction(SampleFIFO& fifo, const char* input, size_t inputSize)
 		void * data = fifo.getReady(blocks);
 		if (data == nullptr)
 		{
-			if (fifo.isDataTransfering())
+			if (!writerFinish)
 			{
 				std::cout << "fail to get ready" << std::endl;
 			}
 			else
 			{
-				dataIsTransfering = false;
+				readerFinish = true;
 			}
 		}
 		else
@@ -82,10 +81,10 @@ void prtintStream(std::istream& str)
 int main()
 {
 	SampleFIFO fifo(1, 21);
-	std::istrstream istr("Hello world");
+	std::istringstream istr("Hello world");
 	std::ifstream ifstr("text.txt");
 	prtintStream(ifstr);
-	std::strstream ostr;
+	std::stringstream ostr;
 	if (!ifstr.is_open())
 	{
 		std::cout << "cant open" << std::endl;
@@ -103,12 +102,11 @@ int main()
 
 
 	std::thread thrW(write);
-	fifo.startTransfer();
 	std::thread thrR(read);
 
 	thrW.join();
 
-	fifo.finishTransfer();
+	reader.finish();
 
 	thrR.join();
 	

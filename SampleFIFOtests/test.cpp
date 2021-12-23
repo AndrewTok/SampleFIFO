@@ -9,7 +9,7 @@
 #include <strstream>
 
 template<class InputIt>
-void writeData(char* dest, InputIt first, InputIt last)//const std::vector<char>& data, size_t size)
+void writeData(char* dest, InputIt first, InputIt last)
 {
 	if (dest == nullptr)
 	{
@@ -99,13 +99,12 @@ void transferData(SampleFIFO& fifo, std::istream& input, std::ostream& output)
 	Writer writer(fifo, input);
 	Reader reader(fifo, output);
 
-	fifo.startTransfer();
 	std::thread writerThread([&writer]() { writer.write(); });
 	std::thread readerThread([&reader]() { reader.read(); });
 
 	writerThread.join();
 
-	fifo.finishTransfer();
+	reader.finish();
 
 	readerThread.join();
 }

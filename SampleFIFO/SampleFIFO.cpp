@@ -2,27 +2,12 @@
 
 size_t SampleFIFO::getReadySize() const
 {
-	return m_nReadySize;
+	return m_nReadySize.load();
 }
 
 size_t SampleFIFO::getFreeSize() const
 {
-	return m_nFreeSize;
-}
-
-void SampleFIFO::startTransfer()
-{
-	dataIsTransfering.store(true);
-}
-
-void SampleFIFO::finishTransfer()
-{
-	dataIsTransfering.store(false);
-}
-
-bool SampleFIFO::isDataTransfering() const
-{
-	return dataIsTransfering.load();
+	return m_nFreeSize.load();
 }
 
 size_t SampleFIFO::getFullSize() const
@@ -65,7 +50,6 @@ SampleFIFO::SampleFIFO(size_t _blockSize, size_t _maxBlocks) : blockSize(_blockS
 	m_nFreeSize = getFullSize();
 	m_nReadySize = 0;
 	m_nFullSize = blockSize * maxBlocks;
-	dataIsTransfering.store(false);
 }
 
 void* SampleFIFO::getFree(size_t& count)
@@ -123,7 +107,7 @@ void SampleFIFO::addReady(void* data)
 	if (m_nFree == m_nFullSize)
 	{
 		m_nFree = 0;
-		m_nFreeSize = m_nReady;
+		m_nFreeSize = m_nReady.load();
 	}
 }
 
@@ -179,6 +163,6 @@ void SampleFIFO::addFree(void* data)
 	if (m_nReady == m_nFullSize)
 	{
 		m_nReady = 0;
-		m_nReadySize = m_nFree;
+		m_nReadySize = m_nFree.load();
 	}
 }

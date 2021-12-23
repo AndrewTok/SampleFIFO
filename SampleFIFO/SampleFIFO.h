@@ -8,11 +8,13 @@ class SampleFIFO final
 {
 	std::mutex m_FifoMutex;
 	std::vector<char> m_pData; 
-	volatile size_t m_nReady;
-	volatile size_t m_nFree;
-	volatile size_t m_nFreeSize;
-	volatile size_t m_nReadySize; 
-	volatile size_t m_nFullSize;
+
+	std::atomic<size_t> m_nReady;
+	std::atomic<size_t> m_nFree;
+	std::atomic<size_t> m_nFreeSize;
+	std::atomic<size_t> m_nReadySize;
+	std::atomic<size_t> m_nFullSize;
+
 
 	const size_t blockSize;
 	const size_t maxBlocks;
@@ -22,8 +24,6 @@ class SampleFIFO final
 	
 	size_t requestedReadyCount;
 	void* givenReadyPtr;
-
-	std::atomic<bool> dataIsTransfering;
 
 	void printBuff() const;
 
@@ -42,10 +42,6 @@ public:
 	size_t getReadySize() const; 
 	size_t getFreeSize() const;
 
-	void startTransfer();
-	void finishTransfer();
-
-	bool isDataTransfering() const;
 	
 	void printStat();
 };

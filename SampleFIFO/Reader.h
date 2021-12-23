@@ -19,10 +19,15 @@ class Reader final
 
 	size_t getStartBlocksCount(size_t dataPortionSize) const;
 
+	std::atomic<bool> dataIsTransfering;
+
 public:
 
-	Reader(SampleFIFO& fifo, std::ostream& out) : sampleFifo(fifo), dataOutput(out) {}
+	Reader(SampleFIFO& fifo, std::ostream& out) : sampleFifo(fifo), dataOutput(out) { dataIsTransfering = true; }
 
 	void read();
+
+	void finish();
+
 };
 
